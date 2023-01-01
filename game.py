@@ -119,8 +119,7 @@ class Game(object):
     """
     def __init__(self, rules_name, player_names, map_, initial_zombies=0,
                  minimum_zombies=0, docker_isolator=False, debug=False,
-                 isolator_port=8000, use_basic_icons=False, use_arduino=False,
-                 arduino_device='/dev/ttyACM0', arduino_bauds=9600):
+                 isolator_port=8000, use_basic_icons=False):
         self.players = []
 
         self.rules_name = rules_name
@@ -131,9 +130,6 @@ class Game(object):
         self.isolator_port = isolator_port
         self.debug = debug
         self.use_basic_icons = use_basic_icons
-        self.use_arduino = use_arduino
-        self.arduino_device = arduino_device
-        self.arduino_bauds = arduino_bauds
 
         self.world = World(self.map.size, debug=debug)
 
@@ -154,14 +150,6 @@ class Game(object):
         self.spawn_players()
         self.spawn_zombies(initial_zombies)
 
-        if self.use_arduino:
-            self.initialize_arduino()
-
-    def initialize_arduino(self):
-        '''Initialize serial connection with arduino screen.'''
-        from serial import Serial
-        self.arduino_serial = Serial(self.arduino_device,
-                                     self.arduino_bauds)
 
     def spawn_players(self):
         """Spawn players using the provided player create functions."""
@@ -213,12 +201,6 @@ class Game(object):
             if self.rules.game_ended():
                 won, description = self.rules.game_won()
 
-                if self.use_arduino:
-                    if won:
-                        self.arduino('g', True)  # "gwin!!"
-                    else:
-                        self.arduino('l', True)  # lose
-
                 print('')
                 if won:
                     print(colored(u'WIN! ', 'green'))
@@ -227,12 +209,6 @@ class Game(object):
                 print(description)
 
                 return won, description
-
-    def arduino(self, data, add_end_chars=False):
-        """Send an order to the arduino screen."""
-        if add_end_chars:
-            data = data + chr(1) * 2
-        self.arduino_serial.write(data)
 
     def draw(self):
         """Draw the world."""
@@ -281,16 +257,3 @@ class Game(object):
                                   if t == self.world.t])
         os.system('clear')
         print(screen)
-
-        # if using arduino screen, send data
-        if self.use_arduino:
-            for thing in self.world.things.values():
-                if isinstance(thing, Player):
-                    icon = 'p'
-                else:
-                    icon = thing.__class__.__name__[0].lower()
-
-                self.arduino(icon + \
-                                  chr(thing.position[0]) + \
-                                  chr(thing.position[1]))
-            self.arduino('r', True)
