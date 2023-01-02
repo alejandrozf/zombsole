@@ -23,11 +23,6 @@ def create_player(name, rules_name, objectives):
     return creator(rules_name, objectives)
 
 
-def create_rules(name, game):
-    creator = get_creator('rules.' + name)
-    return creator(game)
-
-
 class Rules(object):
     """Rules to decide when a game ends, and when it's won."""
     def __init__(self, game):
